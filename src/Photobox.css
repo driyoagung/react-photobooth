@@ -1,0 +1,212 @@
+/* Base Styles */
+.photobox-app {
+  font-family: "Arial", sans-serif;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 20px;
+}
+
+h1 {
+  text-align: center;
+  color: #333;
+  margin-bottom: 30px;
+}
+
+/* Layout */
+.layout {
+  display: flex;
+  gap: 30px;
+}
+
+.camera-panel {
+  flex: 1;
+  padding: 20px;
+  background: #fff;
+  border-radius: 15px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.gallery-panel {
+  flex: 1;
+  padding: 20px;
+  border-radius: 15px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  transition: background-color 0.3s;
+}
+
+/* Kamera dengan Timer */
+.webcam-wrapper {
+  position: relative;
+  margin-bottom: 20px;
+}
+
+.webcam-view {
+  width: 100%;
+  border-radius: 10px;
+  display: block;
+}
+
+.timer-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background: rgba(0, 0, 0, 0.3);
+  border-radius: 10px;
+}
+
+.timer-overlay span {
+  font-size: 120px;
+  font-weight: bold;
+  color: white;
+  text-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+}
+
+/* Efek Flash */
+.flash-effect {
+  animation: flash 0.3s;
+}
+
+@keyframes flash {
+  0% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.3;
+  }
+  100% {
+    opacity: 1;
+  }
+}
+
+/* Kontrol Tombol */
+.controls {
+  display: flex;
+  gap: 15px;
+  justify-content: center;
+}
+
+button {
+  padding: 12px 25px;
+  border: none;
+  border-radius: 50px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+button:hover:not(:disabled) {
+  transform: scale(1.05);
+}
+
+.btn-start {
+  background: #4caf50;
+  color: white;
+}
+
+.btn-stop {
+  background: #f44336;
+  color: white;
+}
+
+.btn-reset {
+  background: #ff9800;
+  color: white;
+}
+
+button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* Galeri Foto */
+.photos-grid {
+  display: grid;
+  grid-template-columns: repeat(1fr);
+  gap: 15px;
+  margin-top: 15px;
+  max-height: 500px;
+  overflow-y: auto;
+  padding: 10px;
+}
+
+.photo-item {
+  background: white;
+  padding: 10px;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.photo-item img {
+  width: 100%;
+  height: 20;
+  border-radius: 5px;
+}
+
+/* Color Picker */
+.color-picker {
+  margin-top: 20px;
+  text-align: center;
+}
+
+.color-picker h3 {
+  margin-bottom: 10px;
+  color: #333;
+}
+
+.color-options {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+}
+
+.color-options button {
+  width: 30px;
+  height: 30px;
+  padding: 0;
+  border-radius: 50%;
+  border: 2px solid transparent;
+}
+
+.color-options button.active {
+  border-color: #333;
+  transform: scale(1.1);
+}
+.controls-top {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.controls-top select,
+.controls-top input[type="color"] {
+  padding: 8px 12px;
+  border-radius: 8px;
+  border: 1px solid #ccc;
+}
+
+/* Frame Lucu */
+.frame-pink {
+  border: 6px solid pink;
+}
+.frame-party {
+  border: 6px dashed #ff69b4;
+  background-image: url("https://www.transparenttextures.com/patterns/stardust.png");
+}
+.frame-minimal {
+  border: 3px solid #333;
+  background-color: #fafafa;
+}
+
+/* Tombol tambahan */
+.btn-print {
+  background: #2196f3;
+  color: white;
+}
