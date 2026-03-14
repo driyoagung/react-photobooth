@@ -1,69 +1,76 @@
 import React, { useState, useEffect, useRef, useCallback } from "react";
 import Webcam from "react-webcam";
 import { motion, AnimatePresence } from "framer-motion";
+import html2canvas from "html2canvas";
+
+// Komponen Animasi Background Modern (Floating Color Blobs)
+const BackgroundAnimation = () => {
+  return (
+    <div className="fixed inset-0 overflow-hidden pointer-events-none z-0 bg-slate-50">
+      <motion.div
+        className="absolute top-[-10%] left-[-10%] w-[50vw] h-[50vw] rounded-full bg-blue-200/40 mix-blend-multiply filter blur-[80px]"
+        animate={{
+          x: [0, 100, 0],
+          y: [0, 50, 0],
+          scale: [1, 1.1, 1],
+        }}
+        transition={{
+          duration: 15,
+          repeat: Infinity,
+          ease: "easeInOut",
+        }}
+      />
+      <motion.div
+        className="absolute top-[20%] right-[-10%] w-[45vw] h-[45vw] rounded-full bg-purple-200/40 mix-blend-multiply filter blur-[80px]"
+        animate={{
+          x: [0, -100, 0],
+          y: [0, 100, 0],
+          scale: [1, 1.2, 1],
+        }}
+        transition={{
+          duration: 18,
+          repeat: Infinity,
+          ease: "easeInOut",
+        }}
+      />
+      <motion.div
+        className="absolute bottom-[-10%] left-[20%] w-[50vw] h-[50vw] rounded-full bg-emerald-200/40 mix-blend-multiply filter blur-[80px]"
+        animate={{
+          x: [0, 50, 0],
+          y: [0, -100, 0],
+          scale: [1, 1.1, 1],
+        }}
+        transition={{
+          duration: 20,
+          repeat: Infinity,
+          ease: "easeInOut",
+        }}
+      />
+    </div>
+  );
+};
 
 const Photobox = () => {
   const webcamRef = useRef(null);
+  const stripRef = useRef(null);
   const [photos, setPhotos] = useState([]);
   const [countdown, setCountdown] = useState(3);
   const [showFlash, setShowFlash] = useState(false);
   const [isRunning, setIsRunning] = useState(false);
+  const [isDownloading, setIsDownloading] = useState(false);
+  const [maxPhotos, setMaxPhotos] = useState(3);
+  const [stripColor, setStripColor] = useState("#ffffff");
   const isTakingPhoto = useRef(false);
-  const [isHovered, setIsHovered] = useState(false);
-  const [isThemeChanging, setIsThemeChanging] = useState(false);
 
-  const [startColor, setStartColor] = useState("#1e293b");
-  const [endColor, setEndColor] = useState("#0f172a");
-  const [galleryBg, setGalleryBg] = useState("linear-gradient(135deg, #1e293b, #0f172a)");
-
-  const [headerStartColor, setHeaderStartColor] = useState("#4b5563");
-  const [headerEndColor, setHeaderEndColor] = useState("#1f2937");
-
-  useEffect(() => {
-    setGalleryBg(`linear-gradient(135deg, ${startColor}, ${endColor})`);
-  }, [startColor, endColor]);
-
-  const bgGradients = [
-    "linear-gradient(135deg, #1f2937 0%, #111827 100%)",
-    "linear-gradient(135deg, #1e3a8a 0%, #1e40af 100%)",
-    "linear-gradient(135deg, #6b21a8 0%, #7e22ce 100%)",
-    "linear-gradient(135deg, #064e3b 0%, #065f46 100%)",
-    "linear-gradient(135deg, #701a75 0%, #86198f 100%)",
-  ];
-
-  const themes = [
-    {
-      name: "Midnight Blue",
-      className: "bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 text-gray-200",
-    },
-    {
-      name: "Deep Purple",
-      className: "bg-gradient-to-br from-purple-900 via-violet-900 to-purple-900 text-gray-200",
-    },
-    {
-      name: "Dark Emerald",
-      className: "bg-gradient-to-br from-emerald-900 via-teal-900 to-emerald-900 text-gray-200",
-    },
-    {
-      name: "Charcoal Smoke",
-      className: "bg-gradient-to-br from-gray-800 via-gray-700 to-gray-800 text-gray-200",
-    },
-    {
-      name: "Blood Crimson",
-      className: "bg-gradient-to-br from-rose-900 via-red-900 to-rose-900 text-gray-200",
-    },
-  ];
-
-  const [selectedTheme, setSelectedTheme] = useState(themes[0].className);
-
+  // Resolusi asli kamera
   const videoConstraints = {
-    width: 400,
-    height: 300,
+    width: 640,
+    height: 480,
     facingMode: "user",
   };
 
   const capture = useCallback(() => {
-    if (isTakingPhoto.current || photos.length >= 5) return;
+    if (isTakingPhoto.current || photos.length >= maxPhotos) return;
 
     isTakingPhoto.current = true;
     const imageSrc = webcamRef.current.getScreenshot();
@@ -73,12 +80,12 @@ const Photobox = () => {
     setTimeout(() => {
       setShowFlash(false);
       isTakingPhoto.current = false;
-    }, 300);
-  }, [photos.length]);
+    }, 200);
+  }, [photos.length, maxPhotos]);
 
   useEffect(() => {
     let timer;
-    if (isRunning && photos.length < 5) {
+    if (isRunning && photos.length < maxPhotos) {
       timer = setInterval(() => {
         setCountdown((prev) => {
           if (prev <= 1) {
@@ -90,16 +97,17 @@ const Photobox = () => {
       }, 1000);
     }
 
-    if (photos.length >= 5 && isRunning) {
+    if (photos.length >= maxPhotos && isRunning) {
       setIsRunning(false);
     }
 
     return () => clearInterval(timer);
-  }, [isRunning, capture, photos.length]);
+  }, [isRunning, capture, photos.length, maxPhotos]);
 
   const startPhotobox = () => {
     setIsRunning(true);
     setCountdown(3);
+    setPhotos([]);
   };
 
   const resetPhotos = () => {
@@ -108,278 +116,289 @@ const Photobox = () => {
     setCountdown(3);
   };
 
-  const handleThemeChange = (e) => {
-    setIsThemeChanging(true);
-    setSelectedTheme(e.target.value);
-    setTimeout(() => setIsThemeChanging(false), 1000);
+  const downloadStrip = async () => {
+    if (!stripRef.current || photos.length === 0) return;
+    
+    setIsDownloading(true);
+    try {
+      const element = stripRef.current;
+      
+      const canvas = await html2canvas(element, {
+        scale: 3, 
+        useCORS: true,
+        backgroundColor: stripColor,
+        logging: false,
+        // Hapus window height parameters untuk menghindari space kosong.
+        // Biarkan html2canvas merender exactly selebar dan setinggi elemennya.
+        width: element.offsetWidth,
+        height: element.offsetHeight,
+      });
+
+      const image = canvas.toDataURL("image/png", 1.0);
+      
+      const link = document.createElement("a");
+      link.href = image;
+      const dateStr = new Date().toISOString().split('T')[0];
+      link.download = `photobooth-${dateStr}.png`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    } catch (err) {
+      console.error("Gagal mendownload foto:", err);
+    } finally {
+      setIsDownloading(false);
+    }
   };
 
   return (
-    <motion.div
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      transition={{ duration: 0.5 }}
-      className={`min-h-screen p-8 transition-all duration-500 ${selectedTheme}`}
-    >
-      <div className="max-w-6xl mx-auto">
-        {/* HEADER SECTION */}
-        <motion.div
-          initial={{ y: -50 }}
-          animate={{ y: 0 }}
-          transition={{ type: "spring", stiffness: 100 }}
-          className="mb-8 p-6 rounded-xl shadow-lg text-center border border-gray-700"
-          style={{
-            background: `linear-gradient(135deg, ${headerStartColor}, ${headerEndColor})`,
-          }}
-          whileHover={{ scale: 1.02 }}
-        >
-          <motion.h1
-            className="text-4xl font-bold text-white drop-shadow-md font-poppins"
-            animate={{
-              textShadow: "0 0 8px rgba(255,255,255,0.5)",
-            }}
-            transition={{
-              repeat: Infinity,
-              repeatType: "reverse",
-              duration: 2,
-            }}
-          >
-            Driyo Photobooth
-          </motion.h1>
-          <motion.p
-            className="mt-2 text-lg font-medium text-gray-300 drop-shadow-md"
-            whileHover={{ scale: 1.05 }}
-          >
-            Dibuat pake React JS sama Tailwind
-          </motion.p>
-        </motion.div>
+    <div className="min-h-screen relative font-sans overflow-x-hidden pb-10">
+      <BackgroundAnimation />
 
-        {/* KONTEN UTAMA */}
-        <div className="flex flex-col lg:flex-row gap-8">
-          {/* Panel Kamera */}
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ duration: 0.5 }}
+        className="relative z-10 p-4 md:p-8 min-h-screen text-slate-800"
+      >
+        <div className="max-w-6xl mx-auto space-y-6">
           <motion.div
-            className="w-full lg:w-1/2 bg-gray-800 text-gray-200 p-6 rounded-xl shadow-lg border border-gray-700"
-            initial={{ x: -50, opacity: 0 }}
-            animate={{ x: 0, opacity: 1 }}
-            transition={{ delay: 0.2 }}
+            initial={{ y: -20, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            className="p-6 rounded-2xl bg-white/90 backdrop-blur-lg shadow-sm border border-slate-200/60 text-center"
           >
-            <div className="relative">
-              <Webcam
-                audio={false}
-                ref={webcamRef}
-                screenshotFormat="image/jpeg"
-                videoConstraints={videoConstraints}
-                className={`w-full h-auto rounded-lg ${
-                  showFlash ? "opacity-0" : "opacity-100"
-                } transition-opacity duration-300`}
-              />
-              {isRunning && (
-                <motion.div
-                  className="absolute inset-0 flex items-center justify-center"
-                  initial={{ scale: 0 }}
-                  animate={{ scale: 1 }}
-                  exit={{ scale: 0 }}
-                >
-                  <motion.span
-                    className="text-9xl font-bold text-white drop-shadow-lg"
-                    key={countdown}
-                    initial={{ scale: 0.5, opacity: 0 }}
-                    animate={{ scale: 1, opacity: 1 }}
-                    exit={{ scale: 1.5, opacity: 0 }}
-                    transition={{ type: "spring", stiffness: 500, damping: 20 }}
-                  >
-                    {countdown}
-                  </motion.span>
-                </motion.div>
-              )}
-            </div>
-
-            <div className="flex justify-center gap-4 mt-6">
-              {!isRunning && photos.length < 5 && (
-                <motion.button
-                  onClick={startPhotobox}
-                  className="px-8 py-3 rounded-lg text-white font-bold bg-gradient-to-r from-green-600 to-blue-600 hover:from-green-700 hover:to-blue-700 transition-all shadow-md"
-                  whileHover={{ scale: 1.05, boxShadow: "0 0 15px rgba(72, 187, 120, 0.7)" }}
-                  whileTap={{ scale: 0.95 }}
-                >
-                  START
-                </motion.button>
-              )}
-              <div className="flex flex-col">
-                <label className="font-semibold mr-2 text-gray-300">Theme Background:</label>
-                <motion.select
-                  className="p-2 rounded-lg bg-gray-700 text-gray-200 shadow border border-gray-600"
-                  value={selectedTheme}
-                  onChange={handleThemeChange}
-                  whileHover={{ scale: 1.02 }}
-                  whileFocus={{ scale: 1.02 }}
-                >
-                  {themes.map((theme, idx) => (
-                    <option key={idx} value={theme.className}>
-                      {theme.name}
-                    </option>
-                  ))}
-                </motion.select>
-              </div>
-
-              {isRunning && (
-                <motion.button
-                  onClick={resetPhotos}
-                  className="px-8 py-3 rounded-lg text-white font-bold bg-gradient-to-r from-red-600 to-pink-600 hover:from-red-700 hover:to-pink-700 transition-all shadow-md"
-                  whileHover={{ scale: 1.05, boxShadow: "0 0 15px rgba(239, 68, 68, 0.7)" }}
-                  whileTap={{ scale: 0.95 }}
-                >
-                  STOP & RESET
-                </motion.button>
-              )}
-
-              {!isRunning && photos.length >= 5 && (
-                <motion.button
-                  onClick={resetPhotos}
-                  className="px-8 py-3 rounded-lg text-white font-bold bg-gradient-to-r from-yellow-600 to-orange-600 hover:from-yellow-700 hover:to-orange-700 transition-all shadow-md"
-                  whileHover={{ scale: 1.05, boxShadow: "0 0 15px rgba(234, 179, 8, 0.7)" }}
-                  whileTap={{ scale: 0.95 }}
-                >
-                  RESET FOTO
-                </motion.button>
-              )}
-            </div>
-
-            {/* Pilihan Gradasi */}
-            <div className="mt-6">
-              <h3 className="text-lg font-medium mb-2 text-gray-300">Pilih Gradien Cepat:</h3>
-              <div className="flex flex-wrap gap-2">
-                {bgGradients.map((gradient, index) => (
-                  <motion.button
-                    key={index}
-                    onClick={() => {
-                      const colors = gradient.match(/#([a-f0-9]{6})/gi);
-                      if (colors && colors.length === 2) {
-                        setStartColor(colors[0]);
-                        setEndColor(colors[1]);
-                      }
-                    }}
-                    className="w-10 h-10 rounded-full border-2 border-gray-600 overflow-hidden"
-                    title={`Gradient ${index + 1}`}
-                    whileHover={{ scale: 1.1 }}
-                    whileTap={{ scale: 0.9 }}
-                  >
-                    <div className="w-full h-full" style={{ background: gradient }} />
-                  </motion.button>
-                ))}
-              </div>
-            </div>
-
-            {/* Custom Gradient Picker */}
-            <div className="mt-6">
-              <h3 className="text-lg font-medium mb-2 text-gray-300">Custom Background Gradient</h3>
-              <div className="flex items-center gap-4">
-                <label className="flex items-center gap-2 text-gray-300">
-                  Start
-                  <motion.input
-                    type="color"
-                    value={startColor}
-                    onChange={(e) => setStartColor(e.target.value)}
-                    className="w-10 h-10 p-0 border-none cursor-pointer bg-gray-700 rounded"
-                    whileHover={{ scale: 1.1 }}
-                  />
-                </label>
-                <label className="flex items-center gap-2 text-gray-300">
-                  End
-                  <motion.input
-                    type="color"
-                    value={endColor}
-                    onChange={(e) => setEndColor(e.target.value)}
-                    className="w-10 h-10 p-0 border-none cursor-pointer bg-gray-700 rounded"
-                    whileHover={{ scale: 1.1 }}
-                  />
-                </label>
-              </div>
-            </div>
+            <h1 className="text-3xl font-bold text-slate-900 tracking-tight">
+              Photobox Study Case
+            </h1>
+            <p className="mt-2 text-slate-500">
+              Buat kenang-kenanganmu secara instan
+            </p>
           </motion.div>
 
-          {/* Panel Galeri Foto */}
-          <motion.div
-            className="w-full lg:w-1/2 p-6 rounded-xl shadow-lg min-h-[500px] transition-all border border-gray-700"
-            style={{ background: galleryBg }}
-            initial={{ x: 50, opacity: 0 }}
-            animate={{ x: 0, opacity: 1 }}
-            transition={{ delay: 0.3 }}
-          >
-            <motion.h2
-              className="text-2xl font-semibold mb-4 text-white drop-shadow-md"
-              animate={{
-                scale: [1, 1.05, 1],
-                textShadow: [
-                  "0 0 5px rgba(255,255,255,0.3)",
-                  "0 0 15px rgba(255,255,255,0.5)",
-                  "0 0 5px rgba(255,255,255,0.3)",
-                ],
-              }}
-              transition={{
-                duration: 3,
-                repeat: Infinity,
-                repeatType: "loop",
-              }}
+          <div className="flex flex-col lg:flex-row gap-8 items-start">
+            
+            <motion.div
+              className="w-full lg:w-[60%] bg-white/90 backdrop-blur-lg p-6 rounded-2xl shadow-sm border border-slate-200/60 flex flex-col items-center"
+              initial={{ x: -20, opacity: 0 }}
+              animate={{ x: 0, opacity: 1 }}
+              transition={{ delay: 0.1 }}
             >
-              Foto Kamu ({photos.length}/5)
-            </motion.h2>
-            <div className="grid grid-cols-2 gap-4">
-              <AnimatePresence>
-                {photos.map((photo, index) => (
-                  <motion.div
-                    key={index}
-                    className="relative p-1 rounded-xl bg-gradient-to-r from-gray-700 via-gray-600 to-gray-700 shadow-lg"
-                    initial={{ scale: 0, opacity: 0 }}
-                    animate={{ scale: 1, opacity: 1 }}
-                    exit={{ scale: 0, opacity: 0 }}
-                    transition={{ type: "spring", stiffness: 300 }}
-                    whileHover={{ scale: 1.05 }}
-                  >
-                    <div className="bg-gray-800 p-2 rounded-lg">
-                      <motion.img
-                        src={photo}
-                        alt={`Photo ${index + 1}`}
-                        className="w-full h-auto object-cover rounded-md"
+              {!isRunning && photos.length === 0 && (
+                <div className="w-full mb-6 p-4 rounded-xl bg-slate-50 border border-slate-200 flex flex-col sm:flex-row justify-between items-center gap-4">
+                  <div className="flex items-center gap-3">
+                    <label className="font-semibold text-slate-700">Jumlah Cetakan:</label>
+                    <div className="flex bg-white rounded-lg border border-slate-300 overflow-hidden shadow-sm">
+                      <button 
+                        onClick={() => maxPhotos > 1 && setMaxPhotos(maxPhotos - 1)}
+                        className="px-3 py-1 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold transition"
+                      >
+                        -
+                      </button>
+                      <input 
+                        type="number" 
+                        min="1" 
+                        max="8" 
+                        value={maxPhotos} 
+                        readOnly
+                        className="w-12 text-center text-slate-800 font-semibold focus:outline-none" 
+                      />
+                      <button 
+                        onClick={() => maxPhotos < 8 && setMaxPhotos(maxPhotos + 1)}
+                        className="px-3 py-1 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold transition"
+                      >
+                        +
+                      </button>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-3">
+                    <label className="font-semibold text-slate-700">Warna Kertas:</label>
+                    <input 
+                      type="color" 
+                      value={stripColor}
+                      onChange={(e) => setStripColor(e.target.value)}
+                      className="w-8 h-8 rounded cursor-pointer border-0 bg-transparent"
+                    />
+                  </div>
+                </div>
+              )}
+
+              <div className="w-full relative rounded-xl overflow-hidden bg-slate-200 aspect-[4/3] flex items-center justify-center border border-slate-300 shadow-inner">
+                {photos.length < maxPhotos ? (
+                  <>
+                    <Webcam
+                      audio={false}
+                      ref={webcamRef}
+                      screenshotFormat="image/jpeg"
+                      videoConstraints={videoConstraints}
+                      className={`w-full h-full object-cover left-0 top-0 absolute ${
+                        showFlash ? "opacity-0" : "opacity-100"
+                      } transition-opacity duration-200 filter contrast-[1.05] brightness-105`}
+                      mirrored={true} 
+                    />
+                    {isRunning && (
+                      <motion.div
+                        className="absolute inset-0 flex items-center justify-center pointer-events-none"
                         initial={{ opacity: 0 }}
                         animate={{ opacity: 1 }}
-                        transition={{ delay: index * 0.1 }}
-                      />
-                    </div>
-                  </motion.div>
-                ))}
-              </AnimatePresence>
-            </div>
-          </motion.div>
+                        exit={{ opacity: 0 }}
+                      >
+                        <motion.span
+                          className="text-[12rem] font-black text-white drop-shadow-2xl"
+                          style={{ textShadow: "0px 8px 30px rgba(0,0,0,0.8)" }}
+                          key={countdown}
+                          initial={{ scale: 0.8, opacity: 0 }}
+                          animate={{ scale: 1, opacity: 1 }}
+                          exit={{ scale: 1.2, opacity: 0 }}
+                          transition={{ type: "spring", stiffness: 400, damping: 20 }}
+                        >
+                          {countdown}
+                        </motion.span>
+                      </motion.div>
+                    )}
+                  </>
+                ) : (
+                  <div className="flex flex-col items-center gap-3 text-slate-500">
+                    <svg className="w-16 h-16" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M5 13l4 4L19 7" />
+                    </svg>
+                    <span className="text-xl font-medium">Sesi Foto Selesai</span>
+                    <span className="text-sm">Silakan download hasil cetakan di samping</span>
+                  </div>
+                )}
+              </div>
+
+              <div className="mt-8 w-full flex flex-wrap justify-center gap-4">
+                {!isRunning && photos.length === 0 && (
+                  <button
+                    onClick={startPhotobox}
+                    className="px-10 py-4 rounded-full text-white text-lg font-bold bg-emerald-500 hover:bg-emerald-600 active:scale-95 transition-all shadow-md shadow-emerald-500/40"
+                  >
+                    🚀 MULAI FOTO
+                  </button>
+                )}
+
+                {isRunning && (
+                  <button
+                    onClick={resetPhotos}
+                    className="px-8 py-3 rounded-full text-white font-medium bg-rose-500 hover:bg-rose-600 active:scale-95 transition-all shadow-sm shadow-rose-500/30"
+                  >
+                    HENTIKAN SESI
+                  </button>
+                )}
+
+                {!isRunning && photos.length > 0 && (
+                  <button
+                    onClick={resetPhotos}
+                    className="px-8 py-3 rounded-full text-slate-700 font-medium bg-white hover:bg-slate-50 active:scale-95 transition-all border-2 border-slate-300 shadow-sm"
+                  >
+                    🔁 ULANG FOTO 
+                  </button>
+                )}
+              </div>
+              
+              <div className="mt-6 text-sm text-slate-400 font-medium bg-slate-100 px-4 py-2 rounded-full">
+                Progress: {photos.length} / {maxPhotos} Foto Diambil
+              </div>
+            </motion.div>
+
+            <motion.div
+              className="w-full lg:w-[40%] bg-white/90 backdrop-blur-lg p-6 rounded-2xl shadow-sm border border-slate-200/60 flex flex-col items-center"
+              initial={{ x: 20, opacity: 0 }}
+              animate={{ x: 0, opacity: 1 }}
+              transition={{ delay: 0.2 }}
+            >
+              <div className="flex w-full justify-between items-center mb-6 border-b border-slate-200 pb-4">
+                <h2 className="text-xl font-bold text-slate-800">
+                  Hasil Photobox
+                </h2>
+                {photos.length > 0 && photos.length === maxPhotos && (
+                  <button 
+                    onClick={downloadStrip}
+                    disabled={isDownloading}
+                    className={`flex items-center gap-2 px-4 py-2 rounded-lg font-bold text-sm transition-all shadow-sm ${
+                      isDownloading 
+                      ? "bg-slate-400 text-white cursor-not-allowed"
+                      : "bg-blue-600 hover:bg-blue-700 text-white shadow-blue-500/30 active:scale-95"
+                    }`}
+                  >
+                    <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                    </svg>
+                    {isDownloading ? "Menyimpan..." : "Download Strip"}
+                  </button>
+                )}
+              </div>
+              
+              <div className="flex-1 w-full bg-slate-100 rounded-xl p-4 flex justify-center items-start overflow-y-auto max-h-[70vh] custom-scrollbar border-inner shadow-inner">
+                {photos.length === 0 ? (
+                  <div className="h-64 flex flex-col items-center justify-center text-slate-400 opacity-60">
+                    <svg className="w-16 h-16 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                    </svg>
+                    <p className="font-medium text-center">Tunggu sampai 100%<br/>baru hasil cetak muncul di sini</p>
+                  </div>
+                ) : (
+                  <div 
+                    ref={stripRef}
+                    className="w-full max-w-[260px] p-3 pb-6 flex flex-col items-center gap-3 shadow-xl transform-gpu"
+                    style={{ backgroundColor: stripColor }}
+                  >
+                    <AnimatePresence>
+                      {photos.map((photo, index) => (
+                        <motion.div
+                          key={`strip-${index}`}
+                          className="relative w-full aspect-[4/3] rounded-sm flex items-center justify-center overflow-hidden bg-white"
+                          initial={{ opacity: 0, y: 10 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          transition={{ delay: 0.1, type: "spring", stiffness: 200 }}
+                        >
+                          <img
+                            src={photo}
+                            alt={`Cetakan ${index + 1}`}
+                            className="w-full h-full object-cover filter contrast-[1.05]"
+                            crossOrigin="anonymous"
+                          />
+                        </motion.div>
+                      ))}
+                    </AnimatePresence>
+
+                    <motion.div 
+                      className="mt-4 flex flex-col items-center justify-center text-center w-full"
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      transition={{ delay: 0.5 }}
+                    >
+                      <h3 className="text-[1.15rem] leading-none font-bold tracking-[0.15em] text-[#1a1a1a] uppercase" style={{ fontFamily: "monospace" }}>
+                        Agung
+                      </h3>
+                      <h3 className="text-[1.15rem] leading-none font-bold tracking-[0.15em] text-[#1a1a1a] uppercase mt-1" style={{ fontFamily: "monospace" }}>
+                        Photobooth
+                      </h3>
+                      <div className="w-10 h-[2px] bg-[#1a1a1a] mt-3 mb-2 opacity-60"></div>
+                      <p className="text-[0.65rem] font-semibold tracking-widest text-[#4a4a4a] opacity-80 uppercase">
+                        {new Date().toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' })}
+                      </p>
+                    </motion.div>
+                  </div>
+                )}
+              </div>
+            </motion.div>
+          </div>
         </div>
-      </div>
 
-      {/* Flash animation */}
-      <AnimatePresence>
-        {showFlash && (
-          <motion.div
-            className="fixed inset-0 bg-white z-50 pointer-events-none"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.3 }}
-          />
-        )}
-      </AnimatePresence>
-
-      {/* Theme change animation */}
-      <AnimatePresence>
-        {isThemeChanging && (
-          <motion.div
-            className="fixed inset-0 bg-black bg-opacity-70 z-40 pointer-events-none"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 0.7 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.5 }}
-          />
-        )}
-      </AnimatePresence>
-    </motion.div>
+        <AnimatePresence>
+          {showFlash && (
+            <motion.div
+              className="fixed inset-0 bg-white z-50 pointer-events-none"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.1 }}
+            />
+          )}
+        </AnimatePresence>
+      </motion.div>
+    </div>
   );
 };
 
