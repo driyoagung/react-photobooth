@@ -60,12 +60,15 @@ const Photobox = () => {
   const [isDownloading, setIsDownloading] = useState(false);
   const [maxPhotos, setMaxPhotos] = useState(3);
   const [stripColor, setStripColor] = useState("#ffffff");
+  const [titleTop, setTitleTop] = useState("Agung");
+  const [titleBottom, setTitleBottom] = useState("Photobooth");
+  const [dateText, setDateText] = useState(
+    new Date().toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' })
+  );
   const isTakingPhoto = useRef(false);
 
-  // Resolusi asli kamera
+  // Constraints kamera (tanpa resolusi hardcode agar responsif di HP, tidak gepeng)
   const videoConstraints = {
-    width: 640,
-    height: 480,
     facingMode: "user",
   };
 
@@ -222,7 +225,7 @@ const Photobox = () => {
                 </div>
               )}
 
-              <div className="w-full relative rounded-xl overflow-hidden bg-slate-200 aspect-[4/3] flex items-center justify-center border border-slate-300 shadow-inner">
+              <div className={`w-full relative rounded-xl overflow-hidden bg-slate-200 flex items-center justify-center border border-slate-300 shadow-inner ${photos.length < maxPhotos ? "aspect-[4/3]" : "py-8"}`}>
                 {photos.length < maxPhotos ? (
                   <>
                     <Webcam
@@ -257,12 +260,56 @@ const Photobox = () => {
                     )}
                   </>
                 ) : (
-                  <div className="flex flex-col items-center gap-3 text-slate-500">
-                    <svg className="w-16 h-16" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M5 13l4 4L19 7" />
-                    </svg>
-                    <span className="text-xl font-medium">Sesi Foto Selesai</span>
-                    <span className="text-sm">Silakan download hasil cetakan di samping</span>
+                  <div className="flex flex-col items-center w-full px-4 gap-4 overflow-y-auto custom-scrollbar">
+                    <div className="flex items-center gap-3 text-emerald-600">
+                      <svg className="w-10 h-10" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                      </svg>
+                      <span className="text-xl font-bold">Sesi Foto Selesai</span>
+                    </div>
+
+                    <div className="w-full max-w-sm bg-white p-5 rounded-xl border border-slate-200 shadow-sm space-y-4 text-left">
+                      <h3 className="font-bold text-slate-800 border-b border-slate-100 pb-2">Kustomisasi Hasil</h3>
+                      
+                      <div className="space-y-3">
+                        <div>
+                          <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Baris Pertama</label>
+                          <input 
+                            type="text" 
+                            value={titleTop} 
+                            onChange={(e) => setTitleTop(e.target.value)}
+                            className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 transition-colors text-slate-700 font-medium text-sm"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Baris Kedua</label>
+                          <input 
+                            type="text" 
+                            value={titleBottom} 
+                            onChange={(e) => setTitleBottom(e.target.value)}
+                            className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 transition-colors text-slate-700 font-medium text-sm"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Tanggal / Catatan</label>
+                          <input 
+                            type="text" 
+                            value={dateText} 
+                            onChange={(e) => setDateText(e.target.value)}
+                            className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 transition-colors text-slate-700 font-medium text-sm"
+                          />
+                        </div>
+                        <div className="flex items-center justify-between pt-2">
+                          <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider">Warna Kertas</label>
+                          <input 
+                            type="color" 
+                            value={stripColor}
+                            onChange={(e) => setStripColor(e.target.value)}
+                            className="w-8 h-8 rounded cursor-pointer border-0 bg-transparent"
+                          />
+                        </div>
+                      </div>
+                    </div>
                   </div>
                 )}
               </div>
@@ -352,31 +399,33 @@ const Photobox = () => {
                           animate={{ opacity: 1, y: 0 }}
                           transition={{ delay: 0.1, type: "spring", stiffness: 200 }}
                         >
-                          <img
-                            src={photo}
-                            alt={`Cetakan ${index + 1}`}
-                            className="w-full h-full object-cover filter contrast-[1.05]"
-                            crossOrigin="anonymous"
+                          <div
+                            className="w-full h-full filter contrast-[1.05]"
+                            style={{
+                              backgroundImage: `url(${photo})`,
+                              backgroundSize: 'cover',
+                              backgroundPosition: 'center',
+                            }}
                           />
                         </motion.div>
                       ))}
                     </AnimatePresence>
 
                     <motion.div 
-                      className="mt-4 flex flex-col items-center justify-center text-center w-full"
+                      className="mt-4 flex flex-col items-center justify-center text-center w-full px-2"
                       initial={{ opacity: 0 }}
                       animate={{ opacity: 1 }}
                       transition={{ delay: 0.5 }}
                     >
-                      <h3 className="text-[1.15rem] leading-none font-bold tracking-[0.15em] text-[#1a1a1a] uppercase" style={{ fontFamily: "monospace" }}>
-                        Agung
+                      <h3 className="text-[1.15rem] leading-none font-bold tracking-[0.15em] text-[#1a1a1a] uppercase break-all" style={{ fontFamily: "monospace" }}>
+                        {titleTop || ' '}
                       </h3>
-                      <h3 className="text-[1.15rem] leading-none font-bold tracking-[0.15em] text-[#1a1a1a] uppercase mt-1" style={{ fontFamily: "monospace" }}>
-                        Photobooth
+                      <h3 className="text-[1.15rem] leading-none font-bold tracking-[0.15em] text-[#1a1a1a] uppercase mt-1 break-all" style={{ fontFamily: "monospace" }}>
+                        {titleBottom || ' '}
                       </h3>
                       <div className="w-10 h-[2px] bg-[#1a1a1a] mt-3 mb-2 opacity-60"></div>
-                      <p className="text-[0.65rem] font-semibold tracking-widest text-[#4a4a4a] opacity-80 uppercase">
-                        {new Date().toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' })}
+                      <p className="text-[0.65rem] font-semibold tracking-widest text-[#4a4a4a] opacity-80 uppercase break-all">
+                        {dateText || ' '}
                       </p>
                     </motion.div>
                   </div>
